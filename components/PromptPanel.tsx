@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Prompt, PromptCategory } from '../types';
 
@@ -12,17 +11,30 @@ interface PromptPanelProps {
 
 const PromptPanel: React.FC<PromptPanelProps> = ({ onGenerate, isLoading, promptCategories, analyzePrompt, disabled }) => {
   const [customPrompt, setCustomPrompt] = useState('');
+  const [analyzeContext, setAnalyzeContext] = useState('');
   const [openCategory, setOpenCategory] = useState<string | null>(promptCategories[0]?.name || null);
 
   const handlePromptClick = (prompt: string) => {
     if (disabled || isLoading) return;
     setCustomPrompt('');
+    setAnalyzeContext('');
     onGenerate(prompt);
   };
   
+  const handleAnalyzeClick = () => {
+    if (disabled || isLoading) return;
+    let finalPrompt = analyzePrompt.english;
+    if (analyzeContext.trim()) {
+        finalPrompt += `. Pay special attention to this instruction: "${analyzeContext.trim()}"`;
+    }
+    setCustomPrompt('');
+    onGenerate(finalPrompt);
+  };
+
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (disabled || isLoading || !customPrompt.trim()) return;
+    setAnalyzeContext('');
     onGenerate(customPrompt);
   };
   
@@ -38,19 +50,30 @@ const PromptPanel: React.FC<PromptPanelProps> = ({ onGenerate, isLoading, prompt
     <div className="bg-base-200 p-4 rounded-lg shadow-md space-y-4">
       <h2 className="text-lg font-semibold text-content-100">2. Choose an Edit</h2>
       
-      {/* Analyze Button */}
-      <button 
-        onClick={() => handlePromptClick(analyzePrompt.english)}
-        disabled={disabled || isLoading}
-        className={`${buttonClasses} ${disabled || isLoading ? disabledClasses : `bg-brand-primary/20 hover:bg-brand-primary/30 border-brand-primary`}`}
-      >
-        <span className="font-semibold text-content-100">{analyzePrompt.persian}</span>
-        <span className="text-xs text-content-200">{analyzePrompt.english}</span>
-      </button>
+      {/* Analyze Section */}
+      <div className="space-y-2">
+        <button 
+          onClick={handleAnalyzeClick}
+          disabled={disabled || isLoading}
+          className={`${buttonClasses} ${disabled || isLoading ? disabledClasses : `bg-brand-primary/20 hover:bg-brand-primary/30 border-brand-primary`}`}
+        >
+          <span className="font-semibold text-content-100">{analyzePrompt.persian}</span>
+          <span className="text-xs text-content-200">{analyzePrompt.english}</span>
+        </button>
+        <textarea
+          value={analyzeContext}
+          onChange={(e) => setAnalyzeContext(e.target.value)}
+          placeholder="راهنمایی بیشتر (اختیاری): مثلا روی متن تیشرت تمرکز کن"
+          disabled={disabled || isLoading}
+          rows={2}
+          className="w-full bg-base-100 border border-base-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition disabled:opacity-50"
+        />
+      </div>
+
 
       {/* Accordion for categories */}
       <div className="space-y-2">
-        <h3 className="text-sm font-medium text-content-200">Professional Prompts</h3>
+        <h3 className="text-sm font-medium text-content-200 pt-2 border-t border-base-300">Professional Prompts</h3>
         {promptCategories.map((category) => (
           <div key={category.name} className="border-b border-base-300 last:border-b-0">
             <button

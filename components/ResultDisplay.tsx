@@ -8,6 +8,10 @@ interface ResultDisplayProps {
   isLoading: boolean;
   error: string | null;
   onAcceptEdit: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 const Spinner: React.FC = () => (
@@ -28,7 +32,18 @@ const ImageCard: React.FC<{ title: string; image: ImageFile | null; children?: R
     </div>
 );
 
-const ResultDisplay: React.FC<ResultDisplayProps> = ({ originalImage, editedImage, isLoading, error, onAcceptEdit }) => {
+const HistoryButton: React.FC<{ onClick: () => void; disabled: boolean; children: React.ReactNode; ariaLabel: string }> = ({ onClick, disabled, children, ariaLabel }) => (
+    <button
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={ariaLabel}
+        className="bg-base-300 hover:bg-brand-primary/50 text-content-100 font-bold py-2 px-4 rounded-md transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-base-300 inline-flex items-center"
+    >
+        {children}
+    </button>
+);
+
+const ResultDisplay: React.FC<ResultDisplayProps> = ({ originalImage, editedImage, isLoading, error, onAcceptEdit, onUndo, onRedo, canUndo, canRedo }) => {
     const handleDownload = () => {
         if (!editedImage) return;
         const link = document.createElement('a');
@@ -53,18 +68,34 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({ originalImage, editedImag
         {!originalImage && !isLoading && !error && <WelcomeMessage />}
         
         {originalImage && (
-            <div className="flex flex-col md:flex-row gap-6 flex-grow">
-                <ImageCard title="Before" image={originalImage} />
-                <ImageCard title="After" image={editedImage}>
-                    {isLoading ? (
-                        <Spinner />
-                    ) : (
-                        <div className="text-center text-content-200 p-4">
-                            Your edited image will appear here.
-                        </div>
-                    )}
-                </ImageCard>
-            </div>
+            <>
+                <div className="flex justify-center gap-4 mb-4">
+                    <HistoryButton onClick={onUndo} disabled={!canUndo} ariaLabel="Undo last edit">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                        Undo
+                    </HistoryButton>
+                    <HistoryButton onClick={onRedo} disabled={!canRedo} ariaLabel="Redo last edit">
+                        Redo
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </HistoryButton>
+                </div>
+                <div className="flex flex-col md:flex-row gap-6 flex-grow">
+                    <ImageCard title="Before" image={originalImage} />
+                    <ImageCard title="After" image={editedImage}>
+                        {isLoading ? (
+                            <Spinner />
+                        ) : (
+                            <div className="text-center text-content-200 p-4">
+                                Your edited image will appear here.
+                            </div>
+                        )}
+                    </ImageCard>
+                </div>
+            </>
         )}
 
         {editedImage && !isLoading && (

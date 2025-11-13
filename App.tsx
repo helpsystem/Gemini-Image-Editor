@@ -14,9 +14,20 @@ const App: React.FC = () => {
   const [editedImage, setEditedImage] = useState<ImageFile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<ImageFile[]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number>(-1);
 
   const handleImageUpload = (imageFile: ImageFile | null) => {
-    setOriginalImage(imageFile);
+    if (imageFile) {
+      const newHistory = [imageFile];
+      setHistory(newHistory);
+      setHistoryIndex(0);
+      setOriginalImage(imageFile);
+    } else {
+      setHistory([]);
+      setHistoryIndex(-1);
+      setOriginalImage(null);
+    }
     setEditedImage(null);
     setError(null);
   };
@@ -43,11 +54,39 @@ const App: React.FC = () => {
 
   const handleAcceptEdit = () => {
     if (editedImage) {
+      const newHistory = history.slice(0, historyIndex + 1);
+      const updatedHistory = [...newHistory, editedImage];
+      
+      setHistory(updatedHistory);
+      setHistoryIndex(updatedHistory.length - 1);
       setOriginalImage(editedImage);
       setEditedImage(null);
       setError(null);
     }
   };
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setOriginalImage(history[newIndex]);
+      setEditedImage(null);
+      setError(null);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setOriginalImage(history[newIndex]);
+      setEditedImage(null);
+      setError(null);
+    }
+  };
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
 
   return (
     <div className="min-h-screen bg-base-100 text-content-100 flex flex-col">
@@ -73,6 +112,10 @@ const App: React.FC = () => {
               isLoading={isLoading} 
               error={error} 
               onAcceptEdit={handleAcceptEdit}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
+              canUndo={canUndo}
+              canRedo={canRedo}
             />
           </div>
         </div>
